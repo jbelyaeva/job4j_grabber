@@ -16,16 +16,16 @@ import static org.quartz.TriggerBuilder.*;
 import static org.quartz.SimpleScheduleBuilder.*;
 
 public class AlertRabbit {
-  private static Connection cn;
 
   public static void main(String[] args) {
-    try {
+    try (Connection cn = init()) {
       init();
       List<Long> store = new ArrayList<>();
       Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
       scheduler.start();
       JobDataMap data = new JobDataMap();
       data.put("store", store);
+      data.put("connection", cn);
       JobDetail job = newJob(Rabbit.class)
           .usingJobData(data)
           .build();
@@ -51,12 +51,13 @@ public class AlertRabbit {
     public void execute(JobExecutionContext context) {
       System.out.println("Rabbit runs here ...");
       List<Long> store = (List<Long>) context.getJobDetail().getJobDataMap().get("store");
+      Connection cn = (Connection) context.getJobDetail().getJobDataMap().get("connection");
       store.add(System.currentTimeMillis());
-      add();
+      add(cn);
     }
   }
 
-  public static ru.job4j.quartz.Rabbit add() {
+  public static void add(Connection cn) {
     ru.job4j.quartz.Rabbit rabbit = new ru.job4j.quartz.Rabbit();
     try (PreparedStatement ps = cn.prepareStatement(
         "insert into rabbit (created_date) values (?);",
@@ -72,7 +73,6 @@ public class AlertRabbit {
     } catch (SQLException e) {
       e.printStackTrace();
     }
-    return rabbit;
   }
 
   public static int getInterval() {
@@ -88,12 +88,13 @@ public class AlertRabbit {
     return interval;
   }
 
-  public static void init() {
+  public static Connection init() {
+    Connection connection;
     try (InputStream in = AlertRabbit.class.getClassLoader().getResourceAsStream("rabbit.properties")) {
       Properties config = new Properties();
       config.load(in);
       Class.forName(config.getProperty("driver-class-name"));
-      cn = DriverManager.getConnection(
+      connection = DriverManager.getConnection(
           config.getProperty("url"),
           config.getProperty("username"),
           config.getProperty("password")
@@ -101,6 +102,6 @@ public class AlertRabbit {
     } catch (Exception e) {
       throw new IllegalStateException(e);
     }
-    return;
+    return connection;
   }
 }
