@@ -1,4 +1,9 @@
 package ru.job4j.quartz;
+
+import static org.quartz.JobBuilder.newJob;
+import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
+import static org.quartz.TriggerBuilder.newTrigger;
+
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,17 +14,20 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import org.quartz.*;
+import org.quartz.Job;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.JobExecutionContext;
+import org.quartz.Scheduler;
+import org.quartz.SimpleScheduleBuilder;
+import org.quartz.Trigger;
 import org.quartz.impl.StdSchedulerFactory;
-import static org.quartz.JobBuilder.*;
-import static org.quartz.TriggerBuilder.*;
-import static org.quartz.SimpleScheduleBuilder.*;
 
 public class AlertRabbit {
 
   public static void main(String[] args) {
-    try (Connection cn = init()) {
-      init();
+    Properties properties = getProperties();
+    try (Connection cn = init(properties)) {
       List<Long> store = new ArrayList<>();
       Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
       scheduler.start();
@@ -30,7 +38,7 @@ public class AlertRabbit {
           .usingJobData(data)
           .build();
       SimpleScheduleBuilder times = simpleSchedule()
-          .withIntervalInSeconds(getInterval())
+          .withIntervalInSeconds(Integer.parseInt(properties.getProperty("rabbit.interval")))
           .repeatForever();
       Trigger trigger = newTrigger()
           .startNow()
@@ -75,33 +83,29 @@ public class AlertRabbit {
     }
   }
 
-  public static int getInterval() {
-    int interval;
-    try (InputStream in = AlertRabbit.class.getClassLoader()
-        .getResourceAsStream("rabbit.properties")) {
-      Properties config = new Properties();
-      config.load(in);
-      interval = Integer.parseInt(config.getProperty("rabbit.interval"));
+  public static Connection init(Properties properties) {
+    Connection connection = null;
+    try {
+    Class.forName(properties.getProperty("driver-class-name"));
+    connection = DriverManager.getConnection(
+        properties.getProperty("url"),
+        properties.getProperty("username"),
+        properties.getProperty("password")
+    );
     } catch (Exception e) {
-      throw new IllegalStateException(e);
-    }
-    return interval;
-  }
-
-  public static Connection init() {
-    Connection connection;
-    try (InputStream in = AlertRabbit.class.getClassLoader().getResourceAsStream("rabbit.properties")) {
-      Properties config = new Properties();
-      config.load(in);
-      Class.forName(config.getProperty("driver-class-name"));
-      connection = DriverManager.getConnection(
-          config.getProperty("url"),
-          config.getProperty("username"),
-          config.getProperty("password")
-      );
-    } catch (Exception e) {
-      throw new IllegalStateException(e);
+      e.printStackTrace();
     }
     return connection;
+  }
+
+  public static Properties getProperties() {
+    Properties properties = new Properties();
+    try (InputStream in = AlertRabbit.class.getClassLoader()
+        .getResourceAsStream("rabbit.properties")) {
+      properties.load(in);
+    } catch (Exception e) {
+      throw new IllegalStateException(e);
+    }
+    return properties;
   }
 }
