@@ -83,18 +83,14 @@ public class AlertRabbit {
     }
   }
 
-  public static Connection init(Properties properties) {
-    Connection connection = null;
-    try {
+  public static Connection init(Properties properties) throws ClassNotFoundException, SQLException {
+    Connection connection;
     Class.forName(properties.getProperty("driver-class-name"));
     connection = DriverManager.getConnection(
         properties.getProperty("url"),
         properties.getProperty("username"),
         properties.getProperty("password")
     );
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
     return connection;
   }
 
