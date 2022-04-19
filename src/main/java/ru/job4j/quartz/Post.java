@@ -21,16 +21,13 @@ public class Post {
       return false;
     }
     Post post = (Post) o;
-    return id == post.id && Objects.equals(title, post.title) && Objects.equals(
-        link, post.link) && Objects.equals(description, post.description);
+    return id == post.id && Objects.equals(link, post.link);
   }
 
   @Override
   public int hashCode() {
     int result = id;
-    result = 31 * result + (title != null ? title.hashCode() : 0);
     result = 31 * result + (link != null ? link.hashCode() : 0);
-    result = 31 * result + (description != null ? description.hashCode() : 0);
     return result;
   }
 
