@@ -35,20 +35,19 @@ public class HabrCareerParse {
   }
 
   private String retrieveDescription(String link) throws IOException {
-    StringJoiner sj= new StringJoiner(" ");
+    StringJoiner sj = new StringJoiner(" ");
     Connection connection = Jsoup.connect(link);
     Document document = connection.get();
     Elements elements = document.select(".style-ugc").first().children();
     elements.forEach(elem -> {
       List<Node> descriptions = elem.childNodes();
-      descriptions.forEach(d->{
+      descriptions.forEach(d -> {
         if (!d.childNodes().isEmpty()) {
           String text = d.childNode(0).toString();
           sj.add(text);
         }
       });
     });
-
     return sj.toString();
   }
 }
