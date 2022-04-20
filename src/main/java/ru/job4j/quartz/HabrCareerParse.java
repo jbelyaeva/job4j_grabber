@@ -27,29 +27,38 @@ public class HabrCareerParse implements Parse {
   }
 
   @Override
-  public List<Post> list(String link) throws IOException {
+  public List<Post> list(String link) {
     List<Post> list = new ArrayList<>();
     String pageLink = String.format("%s/vacancies/java_developer?page=", link);
     for (int countPage = 1; countPage < 6; countPage++) {
+      try {
       Connection connection = Jsoup.connect(pageLink + countPage);
       Document document = connection.get();
       Elements rows = document.select(".vacancy-card__inner");
       rows.forEach(row -> {
-        Element dateElement = row.select(".vacancy-card__date").first();
-        LocalDateTime date = dateTimeParser.parse(dateElement.child(0).attr("datetime"));
-        Element titleElement = row.select(".vacancy-card__title").first();
-        Element linkElement = titleElement.child(0);
-        String vacancyName = titleElement.text();
-        String linkOnVacancy = String.format("%s%s", link, linkElement.attr("href"));
-        String description = null;
-        try {
-          description = retrieveDescription(linkOnVacancy);
-        } catch (IOException e) {
-          e.printStackTrace();
-        }
-        list.add(new Post(vacancyName, linkOnVacancy, description, date));
+        list.add(getPost(link, row));
       });
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
     }
     return list;
+  }
+
+  private Post getPost(String linkMain, Element row) {
+    Element dateElement = row.select(".vacancy-card__date").first();
+    LocalDateTime date = dateTimeParser.parse(dateElement.child(0).attr("datetime"));
+    Element titleElement = row.select(".vacancy-card__title").first();
+    Element linkElement = titleElement.child(0);
+    String vacancyName = titleElement.text();
+    String linkOnVacancy = String.format("%s%s", linkMain, linkElement.attr("href"));
+    String description = null;
+    try {
+      description = retrieveDescription(linkOnVacancy);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    Post post = new Post(vacancyName, linkOnVacancy, description, date);
+    return post;
   }
 }
