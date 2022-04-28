@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -94,19 +93,5 @@ public class PsqlStore implements Store, AutoCloseable {
     if (cnn != null) {
       cnn.close();
     }
-  }
-
-  public static void main(String[] args) throws SQLException {
-    Properties properties = AlertRabbit.getProperties();
-    PsqlStore psqlStore = new PsqlStore(properties);
-    Post post = new Post(
-        "java-программист",
-        "https://career.habr.com/vacancies/1" + Math.random(),
-        "fff",
-        LocalDateTime.now());
-    psqlStore.save(post);
-    System.out.println(psqlStore.getAll());
-    System.out.println("##################");
-    System.out.println(psqlStore.findById(1));
   }
 }
