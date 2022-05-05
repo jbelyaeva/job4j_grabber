@@ -35,9 +35,8 @@ public class HabrCareerParse implements Parse {
       Connection connection = Jsoup.connect(pageLink + countPage);
       Document document = connection.get();
       Elements rows = document.select(".vacancy-card__inner");
-      rows.forEach(row -> {
-        list.add(getPost(link, row));
-      });
+      rows.forEach(row ->
+        list.add(getPost(link, row)));
       } catch (IOException e) {
         e.printStackTrace();
       }
